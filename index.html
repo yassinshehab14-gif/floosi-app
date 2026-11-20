@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101827">
+<title>Floosi | فلوسي</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#101827;color:#fff;
+ font-family:Arial,sans-serif;padding:22px;
+}
+h1{font-size:30px;margin-bottom:5px}
+p{color:#aab4c5}
+.card{
+ background:#1b293d;padding:18px;
+ border-radius:18px;margin:17px 0;
+}
+.balance{font-size:34px;font-weight:bold;color:#50d6a0}
+input,select,button{
+ width:100%;padding:14px;margin-top:12px;
+ border:0;border-radius:10px;font-size:16px;
+}
+input,select{background:#26364d;color:white}
+button{
+ background:#35bd8b;color:#092319;
+ font-weight:bold;cursor:pointer;
+}
+.item{
+ display:flex;justify-content:space-between;
+ padding:13px 0;border-bottom:1px solid #34445a;
+}
+small{color:#aab4c5}
+.danger{color:#ff8585}
+</style>
+</head>
+<body>
+
+<h1>💰 Floosi</h1>
+<p>اعرف فلوسك بتروح فين</p>
+
+<div class="card">
+ <small>إجمالي مصروفاتك</small>
+ <div class="balance" id="total">0 EGP</div>
+ <small>ميزانيتك المتبقية</small>
+ <h2 id="remaining">0 EGP</h2>
+</div>
+
+<div class="card">
+ <h3>🎯 الميزانية الشهرية</h3>
+ <input type="number" id="budget" placeholder="اكتب ميزانيتك بالجنيه">
+ <button onclick="saveBudget()">حفظ الميزانية</button>
+</div>
+
+<div class="card">
+ <h3>➕ أضف مصروف جديد</h3>
+ <input id="amount" type="number" placeholder="المبلغ بالجنيه">
+ <select id="category">
+  <option value="أكل">🍔 أكل</option>
+  <option value="مواصلات">🚕 مواصلات</option>
+  <option value="خروجات">🎉 خروجات</option>
+  <option value="تسوق">🛍️ تسوق</option>
+  <option value="دراسة">📚 دراسة</option>
+  <option value="أخرى">📦 أخرى</option>
+ </select>
+ <input id="note" placeholder="ملاحظة (اختياري)">
+ <button onclick="addExpense()">إضافة المصروف</button>
+</div>
+
+<div class="card">
+ <h3>📊 مصروفاتي حسب النوع</h3>
+ <div id="analysis"></div>
+</div>
+
+<div class="card">
+ <h3>📋 آخر المصروفات</h3>
+ <div id="expenses"></div>
+</div>
+
+<script>
+let expenses=JSON.parse(localStorage.getItem("floosiExpenses")||"[]");
+let budget=Number(localStorage.getItem("floosiBudget")||0);
+
+document.getElementById("budget").value=budget;
+
+function save(){
+ localStorage.setItem("floosiExpenses",JSON.stringify(expenses));
+}
+
+function saveBudget(){
+ budget=Number(document.getElementById("budget").value);
+ localStorage.setItem("floosiBudget",budget);
+ render();
+}
+
+function addExpense(){
+ let amount=Number(document.getElementById("amount").value);
+ let category=document.getElementById("category").value;
+ let note=document.getElementById("note").value;
+
+ if(amount<=0){
+  alert("اكتب مبلغ صحيح");
+  return;
+ }
+
+ expenses.unshift({
+  amount,category,note,
+  date:new Date().toLocaleDateString("ar-EG")
+ });
+
+ save();
+ document.getElementById("amount").value="";
+ document.getElementById("note").value="";
+ render();
+}
+
+function render(){
+ let total=expenses.reduce((s,e)=>s+e.amount,0);
+
+ document.getElementById("total").innerText=
+ total.toLocaleString("en-US")+" EGP";
+
+ document.getElementById("remaining").innerText=
+ (budget-total).toLocaleString("en-US")+" EGP";
+
+ let groups={};
+ expenses.forEach(e=>{
+  groups[e.category]=(groups[e.category]||0)+e.amount;
+ });
+
+ document.getElementById("analysis").innerHTML=
+ Object.entries(groups).map(([name,value])=>
+ `<div class="item"><span>${name}</span><b>${value.toLocaleString("en-US")} EGP</b></div>`
+ ).join("")||"لسه مفيش مصروفات";
+
+ document.getElementById("expenses").innerHTML=
+ expenses.map((e,i)=>`
+ <div class="item">
+ <div>${e.category}<br><small>${e.date} ${e.note||""}</small></div>
+ <b class="danger">${e.amount.toLocaleString("en-US")} EGP</b>
+ </div>`).join("")||"لم تضف أي مصروف بعد";
+}
+
+render();
+</script>
+
+</body>
+</html>
